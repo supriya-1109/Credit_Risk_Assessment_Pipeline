@@ -1,284 +1,355 @@
+# Credit Risk Assessment Pipeline (Databricks + DLT + AWS)
 
-# Credit-Risk-Assessment-Pipeline-P2
-## Project Overview
+## 📌 Project Overview
 
-The Credit Risk Assessment Data Pipeline is an end-to-end Data Engineering project designed to process raw credit application datasets and transform them into analytics-ready datasets for credit risk analysis.
+This project implements an **end-to-end ETL pipeline for credit risk assessment** using **Databricks, PySpark, Delta Lake, and AWS services**.
 
-The pipeline follows the Medallion Architecture (Bronze → Silver → Gold) using AWS and Databricks Lakehouse platform. Raw data is ingested from AWS S3, processed using AWS Glue and PySpark, stored in Delta Lake tables, and structured for credit risk analytics.
+The pipeline processes raw financial datasets and transforms them into **analytics-ready datasets** using the **Medallion Architecture (Bronze → Silver → Gold)**.
 
-This system helps financial institutions analyze loan risk, borrower behavior, and financial indicators to support better loan approval decisions.
+The final output enables **credit risk analysis and financial insights** by generating key features such as:
 
-## Project Objectives
+* Loan-to-income ratio
+* Risk score and risk category
+* Default probability indicators
+* Credit behavior insights
+* Loan performance analytics
 
-Build a scalable batch ETL pipeline for credit risk datasets
+---
 
-Process raw datasets stored in AWS S3
+## 📊 Dataset
 
-Perform data cleaning and transformation using PySpark
+### Dataset Source
 
-Implement Medallion Architecture
+Financial/Credit Risk dataset (simulated real-world loan & borrower data)
 
-Generate credit risk analytics datasets
+### Datasets Used
 
-Automate pipeline execution using Apache Airflow
+* `applicant_profiles` → Borrower demographic details
+* `loan_details` → Loan information
+* `credit_history` → Credit scores & repayment behavior
+* `credit_applications` → Loan application records
+* `economic_indicators` → External economic data
 
-## System Architecture
+These datasets simulate a **real-world banking/credit risk system**.
 
-The pipeline follows a modern Lakehouse Data Engineering Architecture.
+---
 
-Pipeline Flow
+## 🏗️ Project Architecture
 
-AWS S3 (Raw CSV Data)
-        ↓
-AWS Glue (CSV → Parquet Conversion)
-        ↓
-Databricks Bronze Layer (Raw Tables)
-        ↓
-Databricks Silver Layer (Data Cleaning & Transformation)
-        ↓
-Databricks Gold Layer (Risk Analytics)
-        ↓
-Business Insights & Dashboards
+The pipeline integrates **Databricks + Delta Live Tables + AWS services**.
 
-## Technology Stack
-Technology	Purpose
-AWS S3	Data Lake Storage
-AWS Glue	ETL Processing (CSV → Parquet)
-Databricks	Data Engineering Platform
-PySpark	Distributed Data Processing
-Delta Lake	Optimized Storage Format
-Apache Airflow	Pipeline Orchestration
-SQL	Analytical Queries
-Git / GitHub	Version Control
+### End-to-End Flow
 
-## Dataset
+```
+AWS S3 → Databricks (DLT Pipeline) → Delta Tables → Analytics Layer
+```
 
-Dataset Used:
+---
 
-Credit Risk Dataset (Kaggle)
+## 🥇 Medallion Architecture Layers
 
-The dataset contains financial and credit-related information about loan applicants.
+### 🔹 Bronze Layer (Raw Data)
 
-Dataset includes:
+#### Purpose
 
-Applicant Profiles
+* Store raw data as-is
+* Preserve lineage
+* Enable traceability
 
-Credit Applications
+#### Tables
 
-Credit History
-
-Loan Details
-
-Economic Indicators
-
-Example Raw Storage Path:
-
-s3://credit-risk-data/raw/credit_data/YYYY/MM/DD/
-
-### Data Pipeline Layers
-### Bronze Layer – Raw Data Ingestion
-
-Purpose:
-
-Store raw credit data with minimal transformation.
-
-Tasks performed:
-
-Read CSV datasets from AWS S3
-
-Convert datasets into Parquet format using AWS Glue
-
-Load data into Delta Bronze tables
-
-Preserve original raw datasets
-
-Example Bronze Tables:
-
-Bronze Tables
+```
 bronze_applicant_profiles
-bronze_credit_applications
-bronze_credit_history
 bronze_loan_details
+bronze_credit_history
+bronze_credit_applications
 bronze_economic_indicators
+```
 
-### Silver Layer – Data Cleaning and Transformation
+#### Operations
 
-Purpose:
+* Raw data ingestion from S3
+* Schema enforcement
+* Metadata tracking
 
-Create clean and standardized datasets for analytics.
+---
 
-Transformations include:
+### 🔹 Silver Layer (Cleaned Data)
 
-Removing duplicate records
+#### Purpose
 
-Handling missing values
+* Data cleaning and standardization
+* Data validation and enrichment
+* Feature preparation
 
-Standardizing categorical values
+#### Transformations
 
-Converting data types
+* Remove duplicates
+* Handle missing/null values
+* Data type casting
+* Standardize categorical fields
+* Median imputation
+* Data quality flags & error handling
 
-Performing data validation checks
+#### Output Tables
 
-Joining related datasets
+```
+silver_applicant_profiles
+silver_loan_details
+silver_credit_history
+silver_credit_applications
+silver_economic_indicators
+```
 
-Feature Engineering Examples:
+---
 
-Debt-to-Income Ratio
+### 🔹 Gold Layer (Analytics Data)
 
-Credit Score Bands
+#### Purpose
 
-Risk Categories
+* Build **business-ready data models**
+* Implement **Star Schema (Fact + Dimension Tables)**
+* Generate analytics features
 
-Example Silver Tables:
+---
 
-Silver Tables
-applicant_cleaned
-economic_indicators_cleaned
-risk_feature_dataset
-data_quality_summary
+## ⭐ Gold Layer Data Model
 
-### Gold Layer – Risk Analytics
+### 📌 Dimension Tables
 
-Purpose:
+```
+dim_borrower   → borrower details
+dim_credit     → credit score & history
+dim_property   → property information
+dim_loan       → loan attributes
+dim_time       → time dimension
+dim_location   → regional data
+```
 
-Create analytics-ready datasets for credit risk analysis.
+---
 
-Example analytics outputs:
+### 📌 Fact Table
 
-Credit risk classification
+```
+fact_loan_application
+```
 
-Borrower risk category
+#### Metrics Included
 
-Expected default probability
+* Loan amount
+* Interest rate
+* Loan-to-value (LTV)
+* Loan-to-income ratio
+* Debt-to-income ratio
+* Previous default flag
+* Risk score
+* Risk category
 
-Loan risk metrics
+---
 
-These datasets enable deeper analysis of borrower behavior and loan risk patterns.
+### 📌 Final Analytics Table
 
-## Business Insights Generated
+```
+credit_catalog.analytics.risk_features
+```
 
-The pipeline enables multiple insights for financial institutions.
+#### Features Generated
 
-## Descriptive Analytics
+* applicant_id
+* loan_purpose
+* credit_score
+* annual_income
+* loan_amount
+* loan_to_income_ratio
+* credit_history_years
+* previous_default_flag
+* risk_score
+* risk_category
+* total_applications
+* default_count
+* default_rate
+* avg_loan_amount
+* avg_credit_score
+
+---
+
+## ⚙️ Pipeline Orchestration
+
+The pipeline is implemented using **Delta Live Tables (DLT)**.
 
-Total loan applications
+### Pipeline Stages
+
+1. Bronze Ingestion
+2. Silver Transformation
+3. Gold Aggregation
 
-Credit score distribution
+### Execution
 
-Loan approval patterns
+* Incremental processing
+* Automated pipeline execution
+* Fault-tolerant design
 
-Applicant income distribution
+---
 
-Loan amount statistics
+## ✅ Data Quality Checks
 
-### Diagnostic Analytics
+Implemented validations include:
 
-Debt-to-income ratio impact
+* Null value checks
+* Duplicate detection
+* Range validation (credit score, interest rate)
+* Schema validation
+* Data quality flags
 
-Risk category analysis
+Monitoring tools:
 
-Default risk patterns
+* Databricks logs
+* DLT expectations
+* Pipeline event logs
 
-Credit score trends
+---
 
-## Strategic Analytics
+## 📁 Project Folder Structure
 
-High-risk borrower identification
+```
+credit-risk-pipeline
+│
+├── bronze_layer
+│   └── ingestion.py
+│
+├── silver_layer
+│   └── transformations.py
+│
+├── gold_layer
+│   └── gld.py
+│
+├── utils
+│   └── validation.py
+│
+├── configs
+│
+├── workflows
+│   └── pipeline.py
+│
+├── requirements.txt
+└── README.md
+```
 
-Loan portfolio risk analysis
+---
 
-Risk segmentation of applicants
+## 🔄 Pipeline Execution Flow
 
-## Pipeline Automation
+```
+Bronze Layer
+      ↓
+Silver Layer
+      ↓
+Gold Layer (Star Schema)
+      ↓
+Analytics / BI
+```
 
-Pipeline execution is automated using Apache Airflow.
+---
 
-Airflow DAG triggers pipelines sequentially:
+## 🛠️ Technologies Used
 
-Bronze Pipeline
-        ↓
-Silver Pipeline
-        ↓
-Gold Pipeline
+* Python
+* PySpark
+* Databricks
+* Delta Lake
+* Delta Live Tables (DLT)
+* AWS S3
+* AWS Glue
+* Apache Airflow (optional orchestration)
+* Git & GitHub
 
-Schedule:
+---
 
-Daily Batch Execution
+## 🚀 Installation
 
-Workflow tasks include:
+Clone the repository:
 
-Bronze ingestion
+```
+git clone https://github.com/supriya-1109/credit-risk-pipeline.git
+cd credit-risk-pipeline
+```
 
-Silver transformation
+Install dependencies:
 
-Gold analytics generation
+```
+pip install -r requirements.txt
+```
 
-Data quality validation
+---
 
-## Data Quality and Monitoring
+## ▶️ Running the Pipeline
 
-The pipeline includes multiple validation checks:
+Run using Databricks DLT pipeline:
 
-Record count validation
+* Create pipeline in Databricks
+* Attach notebook (gold + silver + bronze)
+* Run pipeline
 
-Schema validation
+### Execution Stages
 
-Null value detection
+* Bronze ingestion
+* Silver transformation
+* Gold feature engineering
 
-Duplicate detection
+---
 
-Data anomaly checks
+## 📊 Analytics & Dashboards
 
-Errors and pipeline issues are stored in log tables.
+The Gold layer supports dashboards such as:
 
-Alerts are triggered for pipeline failures.
+### 📌 Risk Distribution Dashboard
 
-## My Role in the Project
+* High / Medium / Low risk segmentation
 
-Role:
+### 📌 Loan Performance Dashboard
 
-Data Engineer – AWS Glue & Data Integration
+* Loan amount trends
+* Default patterns
 
-Responsibilities:
+### 📌 Credit Score Analysis
 
-Designed AWS S3 data lake structure
+* Credit score distribution
+* Risk correlation
 
-Implemented AWS Glue Crawlers for schema discovery
+### 📌 Regional Risk Insights
 
-Created Glue ETL jobs to convert CSV datasets to Parquet
+* Region-wise risk analysis
 
-Managed metadata using AWS Glue Data Catalog
+---
 
-Configured IAM roles for secure AWS integration
+## 💡 Business Insights Generated
 
-Integrated AWS data sources with Databricks pipelines
+### 📊 Risk Analysis
 
-Assisted in pipeline orchestration using Apache Airflow
+Identify high-risk borrowers likely to default
 
-## Key Project Outcomes
+### 💰 Loan Performance
 
-Built a scalable Lakehouse data pipeline
+Analyze loan repayment trends
 
-Implemented Medallion Architecture
+### 📉 Default Prediction
 
-Developed reliable ETL workflows
+Estimate probability of default
 
-Generated analytics-ready datasets
+### 🌍 Regional Insights
 
-Automated data processing pipelines
+Identify high-risk regions
 
-## Future Improvements
+### 🧾 Credit Behavior
 
-Implement real-time streaming ingestion
+Understand borrower financial patterns
 
-Apply machine learning models for credit risk prediction
+---
 
-Deploy dashboards using Power BI or Streamlit
+## 🔮 Future Enhancements
 
-Implement CI/CD pipelines for data engineering workflows
-
-## Conclusion
-
-This project demonstrates how a modern data engineering pipeline can transform raw credit datasets into structured analytics datasets using the Lakehouse architecture.
-
-The system integrates AWS S3, AWS Glue, Databricks, PySpark, Delta Lake, and Airflow to deliver scalable and efficient credit risk data processing for financial analytics.
+* Real-time streaming pipeline
+* Machine learning risk prediction models
+* Advanced BI dashboards
+* Automated anomaly detection
+* Data observability tool
