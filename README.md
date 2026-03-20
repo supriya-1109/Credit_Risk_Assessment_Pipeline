@@ -206,12 +206,14 @@ Credit_Risk_Assessment_Pipeline
 │   └── airflow_dag
 │
 ├── testing
-│   └── data_quality
+│   └── Pytest
 │
 ├── dashboards
 │   └── dashboard_images
 │
 │── assets
+│
+│──Credit Risk Assessment Pipeline.ppt
 │
 └── README.md
 ```
