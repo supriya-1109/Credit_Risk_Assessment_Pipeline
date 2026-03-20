@@ -1,0 +1,1232 @@
+{
+  "datasets": [
+    {
+      "name": "91da3714",
+      "displayName": "dim_credit",
+      "queryLines": [
+        "SELECT * FROM credits_catalog.gold_credit_risk_schema.dim_credit"
+      ]
+    },
+    {
+      "name": "c1222fc5",
+      "displayName": "dim_loan",
+      "queryLines": [
+        "SELECT * FROM credits_catalog.gold_credit_risk_schema.dim_loan"
+      ]
+    },
+    {
+      "name": "08d384fb",
+      "displayName": "dim_location",
+      "queryLines": [
+        "SELECT * FROM credits_catalog.gold_credit_risk_schema.dim_location"
+      ]
+    },
+    {
+      "name": "d603ab7b",
+      "displayName": "dim_property",
+      "queryLines": [
+        "SELECT * FROM credits_catalog.gold_credit_risk_schema.dim_property"
+      ]
+    },
+    {
+      "name": "f3b4e339",
+      "displayName": "dim_time",
+      "queryLines": [
+        "SELECT * FROM credits_catalog.gold_credit_risk_schema.dim_time"
+      ]
+    },
+    {
+      "name": "abf15828",
+      "displayName": "fact_loan_application",
+      "queryLines": [
+        "SELECT * FROM credits_catalog.gold_credit_risk_schema.fact_loan_application"
+      ],
+      "columns": [
+        {
+          "displayName": "risk_category",
+          "description": "Risk category based on LTV (>0.9 High, >0.7 Medium) and DTI ratio (>43 High, >35 Medium)",
+          "expression": "CASE\n  WHEN `LTV` > 0.9 OR `dtir1` > 43 THEN 'High'\n  WHEN `LTV` > 0.7 OR `dtir1` > 35 THEN 'Medium'\n  ELSE 'Low'\nEND"
+        }
+      ]
+    },
+    {
+      "name": "6e2eeb23",
+      "displayName": "Loan Default Analysis",
+      "queryLines": [
+        "SELECT\n",
+        "  f.*,\n",
+        "  l.loan_type,\n",
+        "  l.loan_purpose\n",
+        "FROM\n",
+        "  credits_catalog.gold_credit_risk_schema.fact_loan_application f\n",
+        "    JOIN credits_catalog.gold_credit_risk_schema.dim_loan l\n",
+        "      ON f.loan_key = l.loan_key"
+      ],
+      "columns": [
+        {
+          "displayName": "application_status",
+          "description": "Maps Status (0=Not Default, 1=Default) to readable labels",
+          "expression": "CASE WHEN `Status` = 1 THEN 'Default' ELSE 'Not Default' END"
+        },
+        {
+          "displayName": "risk_category",
+          "description": "Risk category based on LTV and DTI ratio",
+          "expression": "CASE\n  WHEN `LTV` > 0.9 OR `dtir1` > 43 THEN 'High'\n  WHEN `LTV` > 0.7 OR `dtir1` > 35 THEN 'Medium'\n  ELSE 'Low'\nEND"
+        }
+      ]
+    },
+    {
+      "name": "6513c10d",
+      "displayName": "Credit Score Analysis",
+      "queryLines": [
+        "SELECT\n",
+        "  f.*,\n",
+        "  c.Credit_Score,\n",
+        "  c.open_credit\n",
+        "FROM\n",
+        "  credits_catalog.gold_credit_risk_schema.fact_loan_application f\n",
+        "    JOIN credits_catalog.gold_credit_risk_schema.dim_credit c\n",
+        "      ON f.credit_key = c.credit_key"
+      ],
+      "columns": [
+        {
+          "displayName": "risk_score",
+          "description": "Composite risk score: 60% LTV + 40% DTI ratio, capped at 100",
+          "expression": "ROUND(IF((`LTV` * 60) + (`dtir1` / 50 * 40) > 100, 100, (`LTV` * 60) + (`dtir1` / 50 * 40)), 2)"
+        },
+        {
+          "displayName": "risk_category",
+          "description": "Risk category based on LTV and DTI ratio",
+          "expression": "CASE\n  WHEN `LTV` > 0.9 OR `dtir1` > 43 THEN 'High'\n  WHEN `LTV` > 0.7 OR `dtir1` > 35 THEN 'Medium'\n  ELSE 'Low'\nEND"
+        }
+      ]
+    },
+    {
+      "name": "e798822b",
+      "displayName": "Loan Performance",
+      "queryLines": [
+        "SELECT\n",
+        "  f.*,\n",
+        "  t.year\n",
+        "FROM\n",
+        "  credits_catalog.gold_credit_risk_schema.fact_loan_application f\n",
+        "    JOIN credits_catalog.gold_credit_risk_schema.dim_time t\n",
+        "      ON f.time_key = t.time_key"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "9bc7ce59",
+      "displayName": "Credit Dashboards",
+      "layout": [
+        {
+          "widget": {
+            "name": "01f51e00",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "count(loan_id)",
+                      "expression": "COUNT(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "High-Risk Borrower Identification",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "risk_category",
+                  "displayName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "High",
+                        "Medium",
+                        "Low"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(loan_id)",
+                  "displayName": "Count of Loans",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "High",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 4
+                        }
+                      },
+                      {
+                        "value": "Medium",
+                        "color": "#DBEA1D"
+                      },
+                      {
+                        "value": "Low",
+                        "color": "#43A047"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "37234bcb",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6e2eeb23",
+                  "fields": [
+                    {
+                      "name": "application_status",
+                      "expression": "`application_status`"
+                    },
+                    {
+                      "name": "loan_type",
+                      "expression": "`loan_type`"
+                    },
+                    {
+                      "name": "count(loan_id)",
+                      "expression": "COUNT(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": " Loan Default Rate by Loan Type",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "loan_type",
+                  "displayName": "loan_type",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(loan_id)",
+                  "displayName": "Count of Loans",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "application_status",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "application_status",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Default",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 4
+                        }
+                      },
+                      {
+                        "value": "Not Default",
+                        "color": "#43A047"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "0e960ec9",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "income",
+                      "expression": "`income`"
+                    },
+                    {
+                      "name": "loan_amount",
+                      "expression": "`loan_amount`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Income vs Loan Risk Analysis",
+                "showTitle": true
+              },
+              "widgetType": "scatter",
+              "encodings": {
+                "x": {
+                  "fieldName": "income",
+                  "displayName": "Income",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "loan_amount",
+                  "displayName": "Loan Amount",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "displayName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "High",
+                        "color": "#E53935"
+                      },
+                      {
+                        "value": "Medium",
+                        "color": "#FB8C00"
+                      },
+                      {
+                        "value": "Low",
+                        "color": "#43A047"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "076d67d7",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6e2eeb23",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "loan_purpose",
+                      "expression": "`loan_purpose`"
+                    },
+                    {
+                      "name": "count(loan_id)",
+                      "expression": "COUNT(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Loan Purpose Risk Distribution",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "loan_purpose",
+                  "displayName": "loan_purpose",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(loan_id)",
+                  "displayName": "Count of Loans",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "High",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 4
+                        }
+                      },
+                      {
+                        "value": "Medium",
+                        "color": "#FBFB00"
+                      },
+                      {
+                        "value": "Low",
+                        "color": "#43A047"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "1dd9acf7",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6513c10d",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "avg(loan_amount)",
+                      "expression": "AVG(`loan_amount`)"
+                    },
+                    {
+                      "name": "Credit_Score",
+                      "expression": "`Credit_Score`"
+                    },
+                    {
+                      "name": "risk_score",
+                      "expression": "`risk_score`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Credit Score vs Risk Score",
+                "showTitle": true
+              },
+              "widgetType": "scatter",
+              "encodings": {
+                "x": {
+                  "fieldName": "Credit_Score",
+                  "displayName": "Credit Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "risk_score",
+                  "displayName": "Risk Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Medium",
+                        "color": "#08F1DC"
+                      },
+                      {
+                        "value": "Low",
+                        "color": "#E1CDA4"
+                      }
+                    ]
+                  }
+                },
+                "size": {
+                  "fieldName": "avg(loan_amount)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Loan Amount"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "d1bd2c9b",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6513c10d",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "open_credit",
+                      "expression": "`open_credit`"
+                    },
+                    {
+                      "name": "count(loan_id)",
+                      "expression": "COUNT(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Credit History Impact on Risk",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "open_credit",
+                  "displayName": "open_credit",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(loan_id)",
+                  "displayName": "Count of Loans",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "High",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 4
+                        }
+                      },
+                      {
+                        "value": "Medium",
+                        "color": "#E9DB1C"
+                      },
+                      {
+                        "value": "Low",
+                        "color": "#43A047"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 14,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_total_loans",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "count(loan_id)",
+                      "expression": "COUNT(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Loans",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(loan_id)",
+                  "displayName": "Total Loans"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_avg_risk",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6513c10d",
+                  "fields": [
+                    {
+                      "name": "avg(risk_score)",
+                      "expression": "AVG(`risk_score`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Risk Score",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(risk_score)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Risk Score"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_avg_loan",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "avg(loan_amount)",
+                      "expression": "AVG(`loan_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Loan Amount",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(loan_amount)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Avg Loan Amount"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_defaults",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "sum(Status)",
+                      "expression": "SUM(`Status`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Default Count",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(Status)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Default Count"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "a1dcad97",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "time_key",
+                      "expression": "`time_key`"
+                    },
+                    {
+                      "name": "sum(loan_amount)",
+                      "expression": "SUM(`loan_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Loan Performance Dashboard",
+                "showTitle": true,
+                "showDescription": false
+              },
+              "mark": {
+                "size": 3
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "time_key",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(loan_amount)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 26,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "loan-amount-trends-over-time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "Status",
+                      "expression": "`Status`"
+                    },
+                    {
+                      "name": "sum(loan_id)",
+                      "expression": "SUM(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": " Loan Amount Trends Over Time"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "Status",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(loan_id)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "Status",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 20,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "credit-score-analysis",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abf15828",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "bin(credit_key, binWidth=10)",
+                      "expression": "BIN_FLOOR(`credit_key`, 10)"
+                    },
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "CREDIT SCORE ANALYSIS"
+              },
+              "widgetType": "histogram",
+              "encodings": {
+                "x": {
+                  "fieldName": "bin(credit_key, binWidth=10)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "count(*)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 26,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "credit-score-distribution",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6513c10d",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "credit_key",
+                      "expression": "`credit_key`"
+                    },
+                    {
+                      "name": "risk_score",
+                      "expression": "`risk_score`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": " Credit Score Distribution"
+              },
+              "widgetType": "scatter",
+              "encodings": {
+                "x": {
+                  "fieldName": "credit_key",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "risk_score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 32,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "regional-risk-insights",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6513c10d",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "count(loan_id)",
+                      "expression": "COUNT(`loan_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Average Interest Rate by Risk Category",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "risk_category",
+                  "displayName": "risk_category",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "High",
+                        "Medium",
+                        "Low"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(loan_id)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 32,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "region-wise-risk-distribution",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6513c10d",
+                  "fields": [
+                    {
+                      "name": "risk_category",
+                      "expression": "`risk_category`"
+                    },
+                    {
+                      "name": "region_key",
+                      "expression": "`region_key`"
+                    },
+                    {
+                      "name": "avg(risk_score)",
+                      "expression": "AVG(`risk_score`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Region-wise Risk Distribution"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "region_key",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(risk_score)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "risk_category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 38,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "c1a9254a",
+      "displayName": "Global Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
