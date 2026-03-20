@@ -38,8 +38,8 @@ These datasets simulate a **real-world banking/credit risk system**.
 
 The pipeline integrates **Databricks + Delta Live Tables + AWS services**.
 
-![
-]([/Workspace/Users/saikamsambasivarao8@gmail.com/Credit_Risk_Assessment_Pipeline_supriya/assests/ARCHITECTURE_1773861870064.jpeg](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/ARCHITECTURE_1773861870064.jpeg))
+[![
+](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/ARCHITECTURE_1773861870064.jpeg?raw=true)
 ### End-to-End Flow
 
 ```
@@ -136,7 +136,7 @@ dim_location   → regional data
 fact_loan_application
 ```
 ![
-]([/Workspace/Users/saikamsambasivarao8@gmail.com/Credit_Risk_Assessment_Pipeline_supriya/assests/STAR SCHEMA_1773861977573.png](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/STAR%20SCHEMA_1773861977573.png))
+](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/STAR%20SCHEMA_1773861977573.png?raw=true)
 #### Metrics Included
 
 * Loan amount
@@ -160,7 +160,7 @@ credit_catalog.analytics.risk_features
 
 The pipeline is implemented using **Delta Live Tables (DLT)**.
 ![
-]([/Workspace/Users/saikamsambasivarao8@gmail.com/Credit_Risk_Assessment_Pipeline/assests/image_1773893287936.png](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/image_1773893287936.png))
+](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/image_1773893287936.png?raw=true)
 ### Pipeline Stages
 1. Bronze Ingestion
 2. Silver Transformation
@@ -274,7 +274,7 @@ The Gold layer supports dashboards such as:
 
 * High / Medium / Low risk segmentation
 ![
-]([/Workspace/Users/saikamsambasivarao8@gmail.com/Credit_Risk_Assessment_Pipeline/assests/LOAN VS AMOUNT_1773948641737.png](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/LOAN%20VS%20AMOUNT_1773948601661.png))
+](https://github.com/supriya-1109/Credit_Risk_Assessment_Pipeline/blob/main/assests/LOAN%20VS%20AMOUNT_1773948601661.png?raw=true)
 ### 📌 Loan Performance Dashboard
 * Loan amount trends
 * Default patterns
