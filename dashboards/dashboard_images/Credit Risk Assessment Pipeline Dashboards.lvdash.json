@@ -73,7 +73,9 @@
           "description": "Risk category based on LTV and DTI ratio",
           "expression": "CASE\n  WHEN `LTV` > 0.9 OR `dtir1` > 43 THEN 'High'\n  WHEN `LTV` > 0.7 OR `dtir1` > 35 THEN 'Medium'\n  ELSE 'Low'\nEND"
         }
-      ]
+      ],
+      "catalog": "credits_catalog",
+      "schema": "gold_credit_risk_schema"
     },
     {
       "name": "6513c10d",

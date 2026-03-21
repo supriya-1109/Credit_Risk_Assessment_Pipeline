@@ -153,7 +153,7 @@ fact_loan_application
 ### 📌 Final Analytics Table
 
 ```
-credits_catalog.analytics.risk_features
+credits_catalog.gold_credit_risk_schema.risk_features
 ```
 
 ## ⚙️ Orchestration (Databricks + Airflow)
